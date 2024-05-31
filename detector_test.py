@@ -3,22 +3,25 @@ import cv2
 import os
 from deepface import DeepFace
 
-# Load the pre-trained face detection model
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
-capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
+#variables
+face_counter = 0
 counter = 0
 face_match = False
 reference_img = cv2.imread("reference.jpg")
 
+# Load the pre-trained face detection model
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+#Create the Video Capture using the Webcam
+capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
 # Directory to save new faces
 output_dir = "detected_faces"
 os.makedirs(output_dir, exist_ok=True)
-face_counter = 0
 
+#Cgecks the frame to see if its reference
 def check_frame(frame):
     global face_match
     try:
@@ -51,7 +54,7 @@ def save_face(face_img):
         print(f"Failed to save {face_filename}")
     face_counter += 1
 
-
+#Main loop
 while True:
     revalue, frame = capture.read()
     if revalue:
