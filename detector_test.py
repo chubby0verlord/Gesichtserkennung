@@ -9,6 +9,9 @@ import face_recognition
 from sklearn.cluster import DBSCAN
 from imutils import build_montages
 import numpy as np
+import uuid
+from playsound import playsound
+
 ##################################################CODE TO CAPTURE THE FACES AND SAVE THEM################################################
 #variables
 face_counter = 0
@@ -28,6 +31,8 @@ capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 # Directory to save new faces
 output_dir = "detected_faces"
 os.makedirs(output_dir, exist_ok=True)
+
+
 
 
 #Cgecks the frame to see if its reference
@@ -63,6 +68,13 @@ def save_face(face_img):
 		print(f"Failed to save {face_filename}")
 	face_counter += 1
 
+
+
+# Function to play sound in a separate thread
+def play_sound(sound_file):
+    playsound(sound_file)
+
+
 #Main loop
 def video_detection():
 	global counter
@@ -87,6 +99,8 @@ def video_detection():
 			# Display match status
 			if face_match:
 				cv2.putText(frame, "Match!", (20, 450), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 2, (0, 255, 0), 3)
+				#playsound('C:\\Users\\Fadi Hamarneh\\Desktop\\OSZIMT-LF\\Jahr-2\\PythonWP\\Gesichtserkennung\\alarm-26718.mp3')
+				threading.Thread(target=play_sound, args=('C:\\Users\\Fadi Hamarneh\\Desktop\OSZIMT-LF\\Jahr-2\\PythonWP\\Gesichtserkennung\\alarm-26718.mp3',)).start()
 			else:
 				cv2.putText(frame, "No Match!", (20, 450), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 2, (0, 0, 255), 3)
 
@@ -132,6 +146,10 @@ def encode_faces():
 ########################################################################################################################################	
 
 def cluster_faces():
+	#Unique ID to not over write the file
+	unique_id = uuid.uuid4()
+	save_dir = "face_database"
+	os.makedirs(save_dir,exist_ok=True)
 	# load the serialized face encodings + bounding box locations from
 	# disk, then extract the set of encodings to so we can cluster on
 	# them
@@ -151,6 +169,12 @@ def cluster_faces():
 
 	# loop over the unique face integers
 	for labelID in labelIDs:
+
+		# Construct the title and subdirectory path for the current face ID
+		title = "Unknown Faces" if labelID == -1 else f"Face ID #{labelID}_{unique_id}"
+		subdir = os.path.join(save_dir, title)
+
+		os.makedirs(subdir,exist_ok=True)
 		# find all indexes into the `data` array that belong to the
 		# current label ID, then randomly sample a maximum of 25 indexes
 		# from the set
@@ -172,12 +196,24 @@ def cluster_faces():
 			face = cv2.resize(face, (96, 96))
 			faces.append(face)
 
+			# Save the face image
+			file_path = os.path.join(subdir, f"face_{i + 1}.png")
+			cv2.imwrite(file_path, face)
+			print(f"[INFO] Saved face {i + 1} for {title} to {file_path}")
+
 		# create a montage using 96x96 "tiles" with 5 rows and 5 columns
 		montage = build_montages(faces, (96, 96), (5, 5))[0]
-
+		
 		# show the output montage
 		title = "Face ID #{}".format(labelID)
 		title = "Unknown Faces" if labelID == -1 else title
+
+		file_path = os.path.join(subdir, f"{title}.png")
+
+		# Save the montage to file
+		cv2.imwrite(file_path, montage)
+		print(f"[INFO] Saved montage for {title} to {file_path}")
+
 		cv2.imshow(title, montage)
 		cv2.waitKey(0)
 
